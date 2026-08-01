@@ -14,7 +14,9 @@ dependencies = [
     "psycopg[binary] (>=3.3.4,<4.0.0)",
     "gunicorn (>=26.0.0,<27.0.0)",
     "coverage (>=7.15.2,<8.0.0)",
-    "python-dotenv (>=1.2.2,<2.0.0)"
+    "python-dotenv (>=1.2.2,<2.0.0)",
+    "drf-yasg (>=1.21.15,<2.0.0)",
+    "openpyxl (>=3.1.5,<4.0.0)"
 ]
 
 

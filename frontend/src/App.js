@@ -13,7 +13,7 @@ function App() {
   useEffect(() => {
     const fetchTableData = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/shipments/', {
+        const response = await axios.get('/api/shipments/', {
           params: { page, column, condition, value, ordering }
         });
         setShipments(response.data.results);
@@ -30,7 +30,7 @@ function App() {
     setPage(1);
   };
 
-  // === СТИЛИ ДЛЯ КРЕАТИВНОГО ТЕМНОГО ДИЗАЙНА (ФИНАЛЬНАЯ ВЕРСИЯ) ===
+  // === СТИЛИ ДЛЯ ТЕМНОГО ДИЗАЙНА (ФИНАЛЬНАЯ ВЕРСИЯ) ===
   const styles = {
     bodyBg: {
       backgroundColor: '#0f172a',
@@ -91,24 +91,44 @@ function App() {
       fontSize: '0.85rem'
     }
   };
+  // === ФУНКЦИЯ ВЫГРУЗКИ В EXCEL/CSV ===
+  const exportToCSV = async () => {
+    try {
+      // Отправляем запрос на кастомный экшен бэкенда, передавая текущие фильтры
+      const response = await axios.get('/api/shipments/export_excel/', {
+        params: { column, condition, value, ordering },
+        responseType: 'blob' // говорим Axios, что скачиваем бинарный файл (.xlsx)
+      });
+
+      // Скачиваем готовый файл из бэкенда
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'Полный_Отчет_LogiTrack.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error("Ошибка при скачивании отчета с сервера:", error);
+    }
+  };
 
   return (
     <div style={styles.bodyBg}>
-      {/* Сжали контейнер по вертикали с помощью py-3 вместо pt-5 */}
       <div className="container py-3">
 
-        {/* Анимированный футуристичный заголовок */}
+        {/* Анимированный заголовок */}
         <div className="text-center mb-3">
           <h1 className="display-6 font-weight-bold m-0" style={{ letterSpacing: '2px', background: 'linear-gradient(to right, #38bdf8, #818cf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            🛰️ LOGITRACK PRO
+            🛰️ LOGITRACK SMART PANEL
           </h1>
-          {/* ИСПРАВЛЕНО: Заменили text-muted на text-light и opacity для идеальной читаемости */}
+          {/* text-light и opacity для лучшей читаемости */}
           <p className="text-light-50 m-0" style={{ fontSize: '0.95rem', color: 'rgba(248, 250, 252, 0.7)' }}>
-            Интеллектуальная панель диспетчеризации и анализа рейсов
+            Интерактивная панель для поиска и анализа рейсов
           </p>
         </div>
 
-        {/* --- КРЕАТИВНЫЙ БЛОК ФИЛЬТРАЦИИ --- */}
+        {/* --- БЛОК ФИЛЬТРАЦИИ --- */}
         <div className="card p-3 mb-3" style={styles.glassCard}>
           <div className="row g-3 align-items-center">
             <div className="col-md-3">
@@ -123,7 +143,7 @@ function App() {
             <div className="col-md-3">
               <label className="form-label small text-info font-weight-bold mb-1">ЛОГИЧЕСКОЕ УСЛОВИЕ</label>
               <select className="form-select text-white" style={styles.inputStyle} value={condition} onChange={e => { setCondition(e.target.value); setPage(1); }}>
-                <option value="equals">Математическое равно</option>
+                <option value="equals">Равно</option>
                 {column === 'name' && <option value="contains">Содержит подстроку</option>}
                 <option value="greater">Больше чем (&gt;)</option>
                 <option value="less">Меньше чем (&lt;)</option>
@@ -132,7 +152,7 @@ function App() {
 
             <div className="col-md-6">
               <label className="form-label small text-info font-weight-bold mb-1">ПОИСКОВОЕ ЗНАЧЕНИЕ</label>
-              {/* ИСПРАВЛЕНО: Добавлен внутренний стиль для placeholder, чтобы подсказка светилась белым */}
+              {/* Добавлен внутренний стиль для placeholder, чтобы подсказка светилась белым */}
               <input
                   type="text"
                   className="form-control text-white placeholder-light" // Добавили Bootstrap-класс
@@ -144,8 +164,7 @@ function App() {
             </div>
           </div>
         </div>
-
-        {/* --- НЕОНОВАЯ КИБЕР-ТАБЛИЦА (УМЕНЬШЕННЫЕ ОТСТУПЫ) --- */}
+        {/* --- ТАБЛИЦА (УМЕНЬШЕННЫЕ ОТСТУПЫ) --- */}
         <div className="card p-1 mb-3" style={styles.tableCard}>
           <div className="table-responsive" style={styles.tableContainer}>
             <table className="table table-bordered align-middle m-0">
@@ -167,7 +186,6 @@ function App() {
                 {shipments.length > 0 ? (
                   shipments.map(shipment => (
                     <tr key={shipment.id} style={styles.tableRow}>
-                      {/* Уменьшили вертикальные паддинги до p-2 для экономии высоты */}
                       <td className="p-2 text-center text-muted small">{shipment.date}</td>
                       <td className="p-3 text-start font-weight-bold text-dark">{shipment.name}</td>
                       <td className="p-2 text-center"><span style={styles.badgeQuantity}>{shipment.quantity} ед.</span></td>
@@ -188,24 +206,48 @@ function App() {
 
         {/* --- ТЕМНАЯ ПАНЕЛЬ ПАГИНАЦИИ --- */}
         <div className="d-flex justify-content-between align-items-center p-2 rounded" style={styles.glassCard}>
-          <span className="text-light small" style={{ opacity: 0.7 }}>
-              Мониторинг: строк <strong>{shipments.length}</strong> из <strong>{count}</strong>
+
+          {/* Слева: Текст мониторинга */}
+          <span className="text-light small" style={{ opacity: 0.8, width: '30%' }}>
+            Мониторинг: строк <strong>{count > 0 ? (page - 1) * 10 + 1 : 0}–{Math.min(page * 10, count)}</strong> из <strong>{count}</strong>
           </span>
-          <div className="btn-group">
-            <button className="btn btn-outline-info btn-sm px-2" onClick={() => setPage(page - 1)} disabled={page === 1}>
-              ◀ Назад
-            </button>
-            <span className="btn btn-dark btn-sm disabled px-3 text-white" style={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.05)', fontSize: '0.85rem' }}>
-              Срез {page}
-            </span>
-            <button className="btn btn-outline-info btn-sm px-2" onClick={() => setPage(page + 1)} disabled={page * 10 >= count}>
-              Вперед ▶
+
+          {/* ПО ЦЕНТРУ: кнопка выгрузки данных в excel */}
+          <div className="text-center" style={{ width: '40%' }}>
+            <button
+              className="btn btn-sm text-white px-4 font-weight-bold"
+              style={{
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                borderRadius: '8px',
+                border: 'none',
+                boxShadow: '0 0 10px rgba(16, 185, 129, 0.2)'
+              }}
+              onClick={exportToCSV}
+            >
+              📊 Скачать отчет в Excel
             </button>
           </div>
+
+          {/* Справа: Кнопки навигации */}
+          <div className="d-flex justify-content-end" style={{ width: '30%' }}>
+            <div className="btn-group">
+              <button className="btn btn-outline-info btn-sm px-2" onClick={() => setPage(page - 1)} disabled={page === 1}>
+                ◀ Назад
+              </button>
+              <span className="btn btn-dark btn-sm disabled px-3 text-white" style={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.05)', fontSize: '0.85rem' }}>
+                Стр. {page}
+              </span>
+              <button className="btn btn-outline-info btn-sm px-2" onClick={() => setPage(page + 1)} disabled={page * 10 >= count}>
+                Вперед ▶
+              </button>
+            </div>
+          </div>
+
         </div>
 
       </div>
     </div>
+
   );
 }
 

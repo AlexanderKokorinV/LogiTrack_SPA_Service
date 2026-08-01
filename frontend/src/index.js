@@ -12,17 +12,17 @@ style.innerHTML = `
     opacity: 1 !important;
   }
 
-  /* 2. Четкая вертикальная сетка для столбцов и шапки */
+  /* 2. Вертикальная сетка для столбцов и шапки */
   .table-bordered th, .table-bordered td {
     border: 1px solid #cbd5e1 !important;
   }
 
-  /* 3. Четкая горизонтальная сетка между строками (точно такая же) */
+  /* 3. Горизонтальная сетка между строками */
   .table tbody tr td {
     border: 1px solid #cbd5e1 !important;
   }
 
-  /* 4. Гарантированный белый фон для всего списка значений */
+  /* 4. Белый фон для всего списка значений */
   .table-bordered tbody tr {
     background-color: #ffffff !important;
   }
