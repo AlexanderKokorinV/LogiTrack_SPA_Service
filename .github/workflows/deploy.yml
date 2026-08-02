@@ -112,8 +112,8 @@ jobs:
       - name: Copy project files to VM via SFTP
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "backend,config,frontend/build,Dockerfile,docker-compose.yml,nginx.conf,pyproject.toml,poetry.lock"
           target: "/home/${{ secrets.SERVER_USER }}/logitrack"
