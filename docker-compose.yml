@@ -44,16 +44,16 @@ services:
 
   # 3. Веб-сервер Nginx (Фронтенд + Прокси)
   nginx:
-    image: nginx:stable-alpine
+    # Вместо готового образа используем сборку из папки frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     container_name: logitrack_nginx
     restart: always
     ports:
-      - "80:80" # Открываем стандартный HTTP-порт для всего интернета
+      - "80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      # Монтируем скомпилированную папку React для раздачи пользователям
-      - ./frontend/build:/usr/share/nginx/html:ro
-      # Связываем локальную папку отчетов с Nginx
       - ./htmlcov:/usr/share/nginx/coverage:ro
     depends_on:
       web:
