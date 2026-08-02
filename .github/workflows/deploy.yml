@@ -88,55 +88,37 @@ jobs:
   # -------------------------------------------------------------
   deploy:
     needs: test # Запустится только если тесты прошли успешно
-    if: github.event_name == 'push' # пул-реквесты сторонних пользователей не могут запускать деплой
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
 
     steps:
-      # Шаг 1. Скачиваем актуальный код репозитория на сервера GitHub
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      # Шаг 2. Настраиваем Node.js для сборки фронтенда прямо в пайплайне
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "18"
-
-      # Шаг 3. Компилируем фронтенд силами мощных серверов GitHub
-      - name: Build Frontend Production Artifacts
-        run: |
-          cd frontend
-          npm install
-          npm run build
-          cd ..
-
-      # Шаг 4. Копируем обновленные файлы на сервер Yandex Cloud через SFTP
-      - name: Copy project files to VM via SFTP
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "backend,config,frontend/build,Dockerfile,docker-compose.yml,nginx.conf,pyproject.toml,poetry.lock"
-          target: "/tmp/logitrack"
-          tar_tmp_path: "/tmp"
-          rm: true
-
-      # Шаг 5. Подключаемся по SSH и перезапускаем Docker Compose на сервере Яндекса
-      - name: Executing remote SSH commands to deploy
-        uses: appleboy/ssh-action@v0.1.10
+      # Заходим по SSH и даем серверу команду обновиться через Git
+      - name: Deploy to Yandex Cloud Server via SSH
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /tmp/logitrack
+            # 1. Создаем папку проекта в домашней директории текущего пользователя и переходим в нее
+            mkdir -p ~/LogiTrack_SPA_Service
+            cd ~/LogiTrack_SPA_Service
             
-            # Запись всего файла .env из секретов GitHub через безопасный Heredoc
+            # 2. Скачиваем или обновляем код, используя безопасный временный токен авторизации GitHub
+            if [ -d ".git" ]; then
+              git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@://github.com{{ github.repository }}.git
+              git fetch --all
+              git reset --hard origin/main
+            else
+              git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@://github.com{{ github.repository }}.git .
+            fi
+            
+            # 3. Записываем весь файл .env из секретов GitHub
             cat << 'EOF' > .env
             ${{ secrets.ENV_FILE }}
             EOF
             
-            # Перезапускаем контейнеры в облаке с пересборкой
+            # 4. Собираем фронтенд (React) внутри Docker-контейнера при сборке бэкенда
+            # и запускаем всю экосистему LogiTrack Pro в фоновом режиме
             docker compose down
             docker compose up -d --build
