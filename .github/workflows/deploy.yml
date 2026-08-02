@@ -118,6 +118,7 @@ jobs:
           source: "backend,config,frontend/build,Dockerfile,docker-compose.yml,nginx.conf,pyproject.toml,poetry.lock"
           target: "/home/${{ secrets.SERVER_USER }}/logitrack"
           tar_tmp_path: "/tmp"
+          rm: true
 
       # Подключаемся по SSH и перезапускаем Docker Compose на сервере
       - name: Executing remote SSH commands to deploy
