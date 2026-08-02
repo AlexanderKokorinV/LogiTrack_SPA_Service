@@ -70,8 +70,8 @@ jobs:
       # Шаг 5. Устанавливаем зависимости:
       - name: Install dependencies
         run: |
-          poetry config virtualenvs.create false
-          poetry install --no-root
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
       # Шаг 6. Запускаем тесты через SQLite в памяти
       - name: Run Unit Tests with Coverage
         # Запускаем все 13 тестов
