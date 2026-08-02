@@ -110,14 +110,14 @@ jobs:
           
             # 3. Скачиваем или обновляем код
             if [ -d ".git" ]; then
-              git remote set-url origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@://github.com{{ github.repository }}.git"
+              git remote set-url origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/AlexanderKokorinV/LogiTrack_SPA_Service.git"
               git fetch --all
               git reset --hard origin/main
             else
-              git clone "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@://github.com{{ github.repository }}.git" .
+              git clone "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/AlexanderKokorinV/LogiTrack_SPA_Service.git" .
             fi
 
-            # 4. Записываем весь файл .env из секретов GitHub
+            # 4. Записываем весь файл .env из ваших секретов GitHub
             cat << 'EOF' > .env
             ${{ secrets.ENV_FILE }}
             EOF
