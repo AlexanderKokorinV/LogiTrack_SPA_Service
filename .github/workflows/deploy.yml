@@ -132,19 +132,16 @@ jobs:
       - name: Executing remote SSH commands to deploy
         uses: appleboy/ssh-action@v0.1.10
         with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /home/${{ secrets.USERNAME }}/logitrack
+            cd /home/${{ secrets.SERVER_USER }}/logitrack
             
-            # Автоматически создаем или обновляем .env файл из секретов GitHub
-            echo "DB_NAME=${{ secrets.DB_NAME }}" > .env
-            echo "DB_USER=${{ secrets.DB_USER }}" >> .env
-            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
-            echo "DEBUG=False" >> .env
-            echo "DB_HOST=db" >> .env
-            echo "DB_PORT=5432" >> .env
+            # Запись .env через Heredoc
+            cat << 'EOF' > .env
+            ${{ secrets.ENV_FILE }}
+            EOF
             
             # Перезапускаем контейнеры в облаке с пересборкой
             sudo docker compose down
