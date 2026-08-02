@@ -70,7 +70,8 @@ jobs:
       # Шаг 5. Конфигурируем и устанавливаем зависимости
       - name: Install dependencies
         run: |
-          poetry config virtualenvs.create false
+          poetry config virtualenvs.create true
+          poetry config virtualenvs.in-project true
           poetry install --no-root
       # Шаг 6. Запускаем тесты через SQLite в памяти
       - name: Run Unit Tests with Coverage
