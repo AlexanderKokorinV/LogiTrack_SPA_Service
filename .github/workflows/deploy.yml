@@ -117,12 +117,10 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          # Копируем исходники бэкенда и скомпилированную папку frontend/build
           source: "backend,config,frontend/build,Dockerfile,docker-compose.yml,nginx.conf,pyproject.toml,poetry.lock"
-          # Синхронизировано: Точное имя папки с соблюдением заглавных букв
-          target: "/home/${{ secrets.SERVER_USER }}/LogiTrack_SPA_Service"
+          target: "/tmp/logitrack"
           tar_tmp_path: "/tmp"
-          rm: true # Очищаем старый код в папке перед записью нового
+          rm: true
 
       # Шаг 5. Подключаемся по SSH и перезапускаем Docker Compose на сервере Яндекса
       - name: Executing remote SSH commands to deploy
@@ -132,14 +130,13 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Синхронизировано: Переходим в ту же самую целевую папку
-            cd /home/${{ secrets.SERVER_USER }}/LogiTrack_SPA_Service
+            cd /tmp/logitrack
             
             # Запись всего файла .env из секретов GitHub через безопасный Heredoc
             cat << 'EOF' > .env
             ${{ secrets.ENV_FILE }}
             EOF
             
-            # Перезапускаем контейнеры в облаке с пересборкой (команда выполнена без sudo)
+            # Перезапускаем контейнеры в облаке с пересборкой
             docker compose down
             docker compose up -d --build
