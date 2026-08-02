@@ -1,0 +1,127 @@
+# 1. Указываем имя пайплайна
+name: LogiTrack Project Deploy
+
+# 2. Указываем, при каких событиях запускается пайплайн
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+# 3. Создание jobs:
+jobs:
+  # -------------------------------------------------------------
+  # ЭТАП 1: Проверка кода линтером (lint)
+  # -------------------------------------------------------------
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      # Шаг 1. Скачиваем актуальный код репозитория:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      # Шаг 2. Устанавливаем нужную версию Python:
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-node-version: "3.14"
+      # Шаг 3. Устанавливаем Poetry:
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 2.2.1
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+      # Шаг 4. Устанавливаем линтер flake8:
+      - name: Install Lint Tools
+        run: poetry install --no-root && poetry run pip install flake8
+      # Шаг 5. Запускаем линтер Flake8 для всех python-файлов в проекте:
+      - name: Run Flake8
+        run: poetry run flake8 . --ignore=E501,F401,W503 # Пропускаем длинные строки и неиспользуемые импорты для тестов
+
+  # -------------------------------------------------------------
+  # ЭТАП 2: Запуск тестов (test)
+  # -------------------------------------------------------------
+  test:
+    # Запуск тестов только после успешного прохождения линтера:
+    needs: lint
+    runs-on: ubuntu-latest
+    # Прописываем шаги для job:
+    steps:
+      # Шаг 1. Скачиваем актуальный код репозитория:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      # Шаг 2. Устанавливаем нужную версию Python:
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-node-version: "3.14"
+      # Шаг 3. Установка системных зависимостей для сборки psycopg3 из исходников
+      - name: Install System Dependencies for PostgreSQL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpq-dev gcc curl
+      # Шаг 4. Устанавливаем Poetry:
+      - name: Install dependencies
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+      # Шаг 5. Конфигурируем и устанавливаем зависимости
+      - name: Install dependencies
+        run: |
+          poetry config virtualenvs.create true
+          poetry config virtualenvs.in-project true
+          poetry install --no-root
+      # Шаг 6. Запускаем тесты через SQLite в памяти
+      - name: Run Unit Tests with Coverage
+        # Запускаем все 13 тестов
+        env:
+          DJ_TEST_USE_SQLITE: "True"
+        run: |
+          poetry run coverage run --source='backend' manage.py test backend
+          poetry run coverage html
+          poetry run coverage report
+
+  # -------------------------------------------------------------
+  # ЭТАП 3: Деплой на сервер с помощью Docker (deploy)
+  # -------------------------------------------------------------
+  deploy:
+    needs: test # Запустится только если тесты прошли успешно
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to Yandex Cloud Server via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # 1. Очищаем старый мусор, если папки .git еще не существует (первый деплой)
+            if [ ! -d "~/LogiTrack_SPA_Service/.git" ]; then
+              rm -rf ~/LogiTrack_SPA_Service
+            fi
+
+            # 2. Создаем чистую директорию проекта и переходим в нее
+            mkdir -p ~/LogiTrack_SPA_Service
+            cd ~/LogiTrack_SPA_Service
+          
+            # 3. Скачиваем или обновляем код
+            if [ -d ".git" ]; then
+              git remote set-url origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/AlexanderKokorinV/LogiTrack_SPA_Service.git"
+              git fetch --all
+              git reset --hard origin/main
+            else
+              git clone "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/AlexanderKokorinV/LogiTrack_SPA_Service.git" .
+            fi
+
+            # 4. Записываем весь файл .env из ваших секретов GitHub
+            cat << 'EOF' > .env
+            ${{ secrets.ENV_FILE }}
+            EOF
+
+            # 5. Перезапускаем контейнеры в фоновом режиме с принудительной пересборкой
+            docker compose down
+            docker compose up -d --build
