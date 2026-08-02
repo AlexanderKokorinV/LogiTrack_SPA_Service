@@ -92,7 +92,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Заходим по SSH и даем серверу команду обновиться через Git
       - name: Deploy to Yandex Cloud Server via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -100,25 +99,24 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # 1. Создаем папку проекта в домашней директории текущего пользователя и переходим в нее
+            # 1. Создаем папку проекта в домашней директории и переходим в нее
             mkdir -p ~/LogiTrack_SPA_Service
             cd ~/LogiTrack_SPA_Service
             
-            # 2. Скачиваем или обновляем код, используя безопасный временный токен авторизации GitHub
+            # 2. Скачиваем или обновляем код
             if [ -d ".git" ]; then
-              git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@://github.com{{ github.repository }}.git
+              git remote set-url origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@://github.com{{ github.repository }}.git"
               git fetch --all
               git reset --hard origin/main
             else
-              git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@://github.com{{ github.repository }}.git .
+              git clone "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@://github.com{{ github.repository }}.git" .
             fi
             
-            # 3. Записываем весь файл .env из секретов GitHub
+            # 3. Записываем весь файл .env из ваших секретов GitHub
             cat << 'EOF' > .env
             ${{ secrets.ENV_FILE }}
             EOF
             
-            # 4. Собираем фронтенд (React) внутри Docker-контейнера при сборке бэкенда
-            # и запускаем всю экосистему LogiTrack Pro в фоновом режиме
+            # 4. Перезапускаем контейнеры в фоновом режиме с принудительной пересборкой
             docker compose down
             docker compose up -d --build
