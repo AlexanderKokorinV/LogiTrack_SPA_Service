@@ -99,11 +99,16 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # 1. Создаем папку проекта в домашней директории и переходим в нее
+            # 1. Очищаем старый мусор, если папки .git еще не существует (первый деплой)
+            if [ ! -d "~/LogiTrack_SPA_Service/.git" ]; then
+              rm -rf ~/LogiTrack_SPA_Service
+            fi
+
+            # 2. Создаем чистую директорию проекта и переходим в нее
             mkdir -p ~/LogiTrack_SPA_Service
             cd ~/LogiTrack_SPA_Service
-            
-            # 2. Скачиваем или обновляем код
+          
+            # 3. Скачиваем или обновляем код
             if [ -d ".git" ]; then
               git remote set-url origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@://github.com{{ github.repository }}.git"
               git fetch --all
@@ -111,12 +116,12 @@ jobs:
             else
               git clone "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@://github.com{{ github.repository }}.git" .
             fi
-            
-            # 3. Записываем весь файл .env из ваших секретов GitHub
+
+            # 4. Записываем весь файл .env из секретов GitHub
             cat << 'EOF' > .env
             ${{ secrets.ENV_FILE }}
             EOF
-            
-            # 4. Перезапускаем контейнеры в фоновом режиме с принудительной пересборкой
+
+            # 5. Перезапускаем контейнеры в фоновом режиме с принудительной пересборкой
             docker compose down
             docker compose up -d --build
