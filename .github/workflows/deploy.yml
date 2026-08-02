@@ -1,0 +1,134 @@
+# 1. Указываем имя пайплайна
+name: LogiTrack Project Deploy
+
+# 2. Указываем, при каких событиях запускается пайплайн
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+# 3. Создание jobs:
+jobs:
+  # -------------------------------------------------------------
+  # ЭТАП 1: Проверка кода линтером (lint)
+  # -------------------------------------------------------------
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      # Шаг 1. Скачиваем актуальный код репозитория:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      # Шаг 2. Устанавливаем нужную версию Python:
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-node-version: "3.14"
+      # Шаг 3. Устанавливаем Poetry:
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 2.2.1
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+      # Шаг 4. Устанавливаем линтер flake8:
+      - name: Install Lint Tools
+        run: poetry install --no-root && poetry run pip install flake8
+      # Шаг 5. Запускаем линтер Flake8 для всех python-файлов в проекте:
+      - name: Run Flake8
+        run: poetry run flake8 . --ignore=E501,F401,W503 # Пропускаем длинные строки и неиспользуемые импорты для тестов
+
+  # -------------------------------------------------------------
+  # ЭТАП 2: Запуск тестов (test)
+  # -------------------------------------------------------------
+  test:
+    # Запуск тестов только после успешного прохождения линтера:
+    needs: lint
+    runs-on: ubuntu-latest
+    # Прописываем шаги для job:
+    steps:
+      # Шаг 1. Скачиваем актуальный код репозитория:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      # Шаг 2. Устанавливаем нужную версию Python:
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-node-version: "3.14"
+      # Шаг 3. Устанавливаем Poetry:
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 2.2.1
+      # Шаг 4. Устанавливаем зависимости:
+      - name: Install dependencies
+        run: |
+          poetry config virtualenvs.create false
+          poetry install --no-root
+      # Шаг 5. Подменяем Postgres на тестовый SQLite
+      - name: Run Unit Tests with Coverage
+        # Запускаем все 13 тестов
+        env:
+          DJ_TEST_USE_SQLITE: "True"
+        run: |
+          poetry run coverage run --source='backend' manage.py test
+          poetry run coverage report
+
+  # -------------------------------------------------------------
+  # ЭТАП 3: Деплой на сервер с помощью Docker (deploy)
+  # -------------------------------------------------------------
+  deploy:
+    needs: test # Запустится только если тесты прошли успешно
+    if: github.event_name == 'push' # пул-реквесты сторонних пользователей не могут запускать деплой
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      # Настраиваем Node.js для сборки фронтенда прямо в пайплайне
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: Build Frontend Production Artifacts
+        run: |
+          cd frontend
+          npm install
+          npm run build
+          cd ..
+
+      # Копируем обновленные файлы на сервер Yandex Cloud через SFTP
+      - name: Copy project files to VM via SFTP
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          source: "./*"
+          target: "/home/${{ secrets.USERNAME }}/logitrack"
+
+      # Подключаемся по SSH и перезапускаем Docker Compose на сервере
+      - name: Executing remote SSH commands to deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /home/${{ secrets.USERNAME }}/logitrack
+            
+            # Автоматически создаем или обновляем .env файл из секретов GitHub
+            echo "DB_NAME=${{ secrets.DB_NAME }}" > .env
+            echo "DB_USER=${{ secrets.DB_USER }}" >> .env
+            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+            echo "DEBUG=False" >> .env
+            echo "DB_HOST=db" >> .env
+            echo "DB_PORT=5432" >> .env
+            
+            # Перезапускаем контейнеры в облаке с пересборкой
+            sudo docker compose down
+            sudo docker compose up -d --build
