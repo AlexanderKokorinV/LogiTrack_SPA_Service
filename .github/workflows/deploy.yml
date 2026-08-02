@@ -92,15 +92,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Шаг 1. Скачиваем актуальный код репозитория на сервера GitHub
       - name: Checkout code
         uses: actions/checkout@v6
 
-      # Настраиваем Node.js для сборки фронтенда прямо в пайплайне
+      # Шаг 2. Настраиваем Node.js для сборки фронтенда прямо в пайплайне
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: "18"
 
+      # Шаг 3. Компилируем фронтенд силами мощных серверов GitHub
       - name: Build Frontend Production Artifacts
         run: |
           cd frontend
@@ -108,19 +110,21 @@ jobs:
           npm run build
           cd ..
 
-      # Копируем обновленные файлы на сервер Yandex Cloud через SFTP
+      # Шаг 4. Копируем обновленные файлы на сервер Yandex Cloud через SFTP
       - name: Copy project files to VM via SFTP
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          # Копируем исходники бэкенда и скомпилированную папку frontend/build
           source: "backend,config,frontend/build,Dockerfile,docker-compose.yml,nginx.conf,pyproject.toml,poetry.lock"
-          target: "/home/${{ secrets.SERVER_USER }}/logitrack"
+          # Синхронизировано: Точное имя папки с соблюдением заглавных букв
+          target: "/home/${{ secrets.SERVER_USER }}/LogiTrack_SPA_Service"
           tar_tmp_path: "/tmp"
-          rm: true
+          rm: true # Очищаем старый код в папке перед записью нового
 
-      # Подключаемся по SSH и перезапускаем Docker Compose на сервере
+      # Шаг 5. Подключаемся по SSH и перезапускаем Docker Compose на сервере Яндекса
       - name: Executing remote SSH commands to deploy
         uses: appleboy/ssh-action@v0.1.10
         with:
@@ -128,13 +132,14 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /home/${{ secrets.SERVER_USER }}/logitrack
+            # Синхронизировано: Переходим в ту же самую целевую папку
+            cd /home/${{ secrets.SERVER_USER }}/LogiTrack_SPA_Service
             
-            # Запись .env через Heredoc
+            # Запись всего файла .env из секретов GitHub через безопасный Heredoc
             cat << 'EOF' > .env
             ${{ secrets.ENV_FILE }}
             EOF
             
-            # Перезапускаем контейнеры в облаке с пересборкой
-            sudo docker compose down
-            sudo docker compose up -d --build
+            # Перезапускаем контейнеры в облаке с пересборкой (команда выполнена без sudo)
+            docker compose down
+            docker compose up -d --build
