@@ -115,18 +115,9 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "./*"
-          # Игнорируем тяжелый node_modules и локальный кэш .venv
+          source: "backend,config,frontend/build,Dockerfile,docker-compose.yml,nginx.conf,pyproject.toml,poetry.lock"
+          target: "/home/${{ secrets.SERVER_USER }}/logitrack"
           tar_tmp_path: "/tmp"
-          rm: false
-          strip_components: 0
-          exclude: |
-            frontend/node_modules/**
-            .git/**
-            .github/**
-            .venv/**
-            htmlcov/**
-          target: "/home/${{ secrets.USERNAME }}/logitrack"
 
       # Подключаемся по SSH и перезапускаем Docker Compose на сервере
       - name: Executing remote SSH commands to deploy
