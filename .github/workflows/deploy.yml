@@ -78,7 +78,7 @@ jobs:
         env:
           DJ_TEST_USE_SQLITE: "True"
         run: |
-          poetry run coverage run --source='backend' manage.py test
+          poetry run coverage run --source='backend' manage.py test backend
           poetry run coverage html
           poetry run coverage report
 
