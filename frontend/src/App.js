@@ -120,7 +120,7 @@ function App() {
         {/* Анимированный заголовок */}
         <div className="text-center mb-3">
           <h1 className="display-6 font-weight-bold m-0" style={{ letterSpacing: '2px', background: 'linear-gradient(to right, #38bdf8, #818cf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            🛰️ LOGITRACK SMART PANEL
+            🛰️ LOGITRACK RRO
           </h1>
           {/* text-light и opacity для лучшей читаемости */}
           <p className="text-light-50 m-0" style={{ fontSize: '0.95rem', color: 'rgba(248, 250, 252, 0.7)' }}>

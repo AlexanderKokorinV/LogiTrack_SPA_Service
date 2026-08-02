@@ -16,7 +16,11 @@ logger = logging.getLogger(__name__)
 
 
 class ShipmentLogViewSet(viewsets.ModelViewSet):
-    """Контроллер для страницы SPA-приложения"""
+    """
+    Контроллер для управления журналом путевых листов (рейсов).
+    Обеспечивает базовый CRUD, а также кастомную высокопроизводительную
+    фильтрацию (equals, contains, greater, less) и серверную пагинацию по 10 строк.
+    """
 
     queryset = ShipmentLog.objects.all()
     serializer_class = ShipmentLogSerializer

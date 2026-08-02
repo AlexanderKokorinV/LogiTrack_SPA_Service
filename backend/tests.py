@@ -19,6 +19,9 @@ class ShipmentLogAPITests(APITestCase):
     - Динамическую фильтрацию по текстовым и числовым полям (equals, contains, greater, less).
     - Кастомную сортировку и блокировку сортировки по полю даты.
     - Устойчивость API к некорректным типам данных в поисковых запросах.
+    - Корректность работы кастомного API-эндпоинта экспорта (export_excel).
+    - Применение текущих глобальных фильтров и сортировки ко всему генерируемому файлу отчета.
+    - Защиту try-except внутри логики экспорта при передаче невалидных параметров.
     """
 
     def setUp(self):
@@ -126,3 +129,62 @@ class ShipmentLogAPITests(APITestCase):
 
         ShipmentLog.objects.bulk_create(logs_to_create)
         self.assertEqual(ShipmentLog.objects.count(), 5)
+
+    def test_export_excel_endpoint_all_data(self):
+        """11. Тест бэкенд-выгрузки в Excel: получение полной базы без фильтров"""
+        # Формируем URL для кастомного экшена: /api/shipments/export_excel/
+        export_url = f"{self.url}export_excel/"
+
+        response = self.client.get(export_url)
+
+        # Проверяем, что сервер успешно сформировал документ
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Проверяем, что возвращается правильный контент-тип (бинарный XLSX-файл)
+        self.assertEqual(
+            response["Content-Type"],
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        # Проверяем наличие заголовка скачивания файла
+        self.assertIn("Content-Disposition", response)
+        self.assertTrue(response["Content-Disposition"].startswith("attachment; filename="))
+
+    def test_export_excel_with_active_filters(self):
+        """12. Тест бэкенд-выгрузки в Excel: проверка работы сквозного фильтра"""
+        export_url = f"{self.url}export_excel/"
+
+        # Запрашиваем экспорт только тех рейсов, где количество груза > 200
+        # Из 25 созданных записей (10*i) это i=21,22,23,24,25 (всего 5 строк)
+        response = self.client.get(export_url, {
+            "column": "quantity",
+            "condition": "greater",
+            "value": "200"
+        })
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Читаем сгенерированный бинарный файл с помощью openpyxl,
+        # чтобы проверить, сколько строк записал туда бэкенд
+        import openpyxl
+        import io
+
+        # Оборачиваем байты ответа в поток и открываем книгу Excel
+        excel_file = io.BytesIO(response.content)
+        wb = openpyxl.load_workbook(excel_file)
+        ws = wb.active
+
+        # Считаем количество строк. Должно быть: 1 строка заголовков + 5 строк данных = 6
+        self.assertEqual(ws.max_row, 6)
+
+    def test_export_excel_invalid_type_fallback(self):
+        """13. Тест защиты try-except внутри метода выгрузки в Excel"""
+        export_url = f"{self.url}export_excel/"
+
+        # Передаем текст вместо числа в фильтр «Меньше чем»
+        response = self.client.get(export_url, {
+            "column": "quantity",
+            "condition": "less",
+            "value": "ошибка_синтаксиса"
+        })
+
+        # Контроллер не должен выдать 500 ошибку, а должен безопасно вернуть 200 OK
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
