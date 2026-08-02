@@ -54,7 +54,7 @@ services:
       # Монтируем скомпилированную папку React для раздачи пользователям
       - ./frontend/build:/usr/share/nginx/html:ro
       # Связываем локальную папку отчетов с Nginx
-      - ./htmlcov:/usr/share/nginx/html/coverage:ro
+      - ./htmlcov:/usr/share/nginx/coverage:ro
     depends_on:
       web:
         condition: service_healthy
