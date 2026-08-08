@@ -1,3 +1,8 @@
+# Блокируем параллельные запуски: второй push встанет в очередь, а не упадёт с конфликтом имён
+concurrency:
+  group: logitrack-deploy
+  cancel-in-progress: false
+
 # 1. Указываем имя пайплайна
 name: LogiTrack Project Deploy
 
@@ -25,7 +30,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-node-version: "3.14"
+          python-version: "3.14"
       # Шаг 3. Устанавливаем Poetry:
       - name: Install Poetry
         uses: snok/install-poetry@v1
@@ -56,7 +61,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-node-version: "3.14"
+          python-version: "3.14"
       # Шаг 3. Установка системных зависимостей для сборки psycopg3 из исходников
       - name: Install System Dependencies for PostgreSQL
         run: |
@@ -123,5 +128,6 @@ jobs:
             EOF
 
             # 5. Перезапускаем контейнеры в фоновом режиме с принудительной пересборкой
-            docker compose down
+            docker compose down --remove-orphans || true
+            docker rm -f logitrack_db logitrack_web logitrack_nginx 2>/dev/null || true
             docker compose up -d --build
