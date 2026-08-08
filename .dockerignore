@@ -1,0 +1,33 @@
+# --- Git ---
+.git
+.gitignore
+
+# --- IDE / ОС ---
+.idea
+.vscode
+.DS_Store
+
+# --- Python (кэши и артефакты) ---
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+htmlcov/
+.coverage
+*.egg-info/
+
+# --- Секреты (в образ не должно попасть ничего с env) ---
+.env
+.env.*
+!.env.example
+
+# --- Фронтенд: зависимости не нужны в backend-образе (сборка React выполняется отдельно) ---
+frontend/node_modules/
+frontend/.cache/
+
+# --- Документация и файлы развёртывания (не нужны в runtime-образе) ---
+README.md
+Dockerfile
+docker-compose.yml
+nginx.conf
+*.log
