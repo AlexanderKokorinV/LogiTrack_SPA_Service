@@ -192,3 +192,8 @@ cython_debug/
 
 *.pyc
 media/
+
+.git
+
+frontend/      # nginx монтирует фронтенд отдельным томом
+backend_static/
