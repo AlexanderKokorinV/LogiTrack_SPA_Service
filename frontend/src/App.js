@@ -120,7 +120,7 @@ function App() {
         {/* Анимированный заголовок */}
         <div className="text-center mb-3">
           <h1 className="display-6 font-weight-bold m-0" style={{ letterSpacing: '2px', background: 'linear-gradient(to right, #38bdf8, #818cf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            🛰️ LOGITRACK RRO
+            🛰️ LOGITRACK PRO
           </h1>
           {/* text-light и opacity для лучшей читаемости */}
           <p className="text-light-50 m-0" style={{ fontSize: '0.95rem', color: 'rgba(248, 250, 252, 0.7)' }}>
@@ -172,12 +172,21 @@ function App() {
               <label className="form-label small text-info font-weight-bold mb-1">ПОИСКОВОЕ ЗНАЧЕНИЕ</label>
               {/* Добавлен внутренний стиль для placeholder, чтобы подсказка светилась белым */}
               <input
-                  type="text"
+                  type={column === 'name' ? 'text' : 'number'}
+                  step={column === 'name' ? undefined : 'any'}
+                  min={column === 'name' ? undefined : '0'}
                   className="form-control text-white placeholder-light"
                   style={styles.inputStyle}
-                  placeholder="Начните вводить данные для мгновенной фильтрации..."
+                  placeholder={
+                    column === 'name'
+                      ? 'Начните вводить данные для мгновенной фильтрации...'
+                      : 'Введите числовое значение...'
+                  }
                   value={value}
-                  onChange={e => { setValue(e.target.value); setPage(1); }}
+                  onChange={e => {
+                    setValue(e.target.value);
+                    setPage(1);
+                  }}
               />
             </div>
           </div>
