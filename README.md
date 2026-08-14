@@ -20,7 +20,7 @@
 
 1. **Клонируйте репозиторий проекта на свой компьютер:**
    ```
-   git clone https://github.com/AlexanderKokorinV/LogiTrack_SPA_Service
+   git clone https://github.com/Alexande    rKokorinV/LogiTrack_SPA_Service
    cd LogiTrack_SPA_Service
    ```
 
@@ -99,7 +99,7 @@ sudo docker compose down
 
 ## 🧪 Запуск Unit-тестов и замер покрытия
 
-В проекте реализовано покрытие тестами кастомных фильтров, пагинации, сортировки и валидации типов данных. Для запуска тестов и вывода отчета `coverage` выполните:
+В проекте реализовано покрытие тестами серверной пагинации, фильтрации, сортировки, валидации параметров, промежуточных состояний фильтрации SPA, ограничения CRUD-операций и Excel-экспорта. Для запуска тестов и вывода отчета `coverage` выполните:
 ```
 poetry run coverage run --source='backend' manage.py test
 poetry run coverage report
@@ -128,9 +128,9 @@ LogiTrack_SPA_Service/
 │   ├── models.py               # Модель ShipmentLog (Дата, Маршрут, Количество, Расстояние)
 │   ├── serializers.py          # Сериализатор данных для перевода в JSON
 │   ├── pagination.py           # Кастомный класс серверной пагинации (ShipmentlogPagination)
-│   ├── views.py                # ViewSet с динамическими ORM-лукапами фильтрации
-│   ├── urls.py                 # Изолированная маршрутизация приложения
-│   └── tests.py                # Комплексные Unit-тесты бизнес-логики (13 тест-кейсов)
+│   ├── views.py                # Generic views: список путевых листов и Excel-экспорт
+│   ├── urls.py                 # Маршрутизация API через path()
+│   └── tests.py                # Комплексные API-тесты (27 тестов)
 │
 ├── config/                     # Главный конфигурационный модуль Django
 │   ├── settings.py             # Настройки проекта (CORS, Логирование, СУБД)
@@ -141,7 +141,7 @@ LogiTrack_SPA_Service/
 │   │   ├── App.js              # Основной компонент SPA-таблицы (логика useState/useEffect)
 │   │   ├── index.js            # Точка входа React + внедрение глобального CSS
 │   │   └── bootstrap.min.css   # Локальный файл стилей Bootstrap (автономность сборки)
-│   └── package.json            # Зависимости фронтенда (Axios, Bootstrap)
+│   └── package.json             # Зависимости фронтенда (Axios, Bootstrap)
 │
 ├── Dockerfile                  # Инструкция сборки Docker-образа для Django (Poetry inside)
 ├── nginx.conf                  # Конфигурация веб-сервера Nginx (проксирование /api/ и раздача SPA)

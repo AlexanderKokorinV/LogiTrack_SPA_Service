@@ -1,11 +1,16 @@
-from django.urls import include, path
-from rest_framework.routers import DefaultRouter
+from django.urls import path
 
-from backend.views import ShipmentLogViewSet
-
-router = DefaultRouter()
-router.register(r"shipments", ShipmentLogViewSet, basename="shipment")
+from backend.views import ShipmentLogExportExcelView, ShipmentLogListView
 
 urlpatterns = [
-    path("", include(router.urls)),
+    path(
+        "shipments/",
+        ShipmentLogListView.as_view(),
+        name="shipment-list",
+    ),
+    path(
+        "shipments/export_excel/",
+        ShipmentLogExportExcelView.as_view(),
+        name="shipment-export-excel",
+    ),
 ]

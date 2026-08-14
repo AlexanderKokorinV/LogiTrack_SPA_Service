@@ -11,10 +11,18 @@ class BackendConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "backend"
 
-    def ready(self):
+    def ready(self) -> None:
         """Переопределение метода для автозаполнения БД случайными значениями"""
         # Предотвращение запуска скрипта при миграциях и сборке статики (ложное срабатывание)
-        if "manage.py" in sys.argv and any(x in sys.argv for x in ["makemigrations", "migrate", "collectstatic"]):
+        if "manage.py" in sys.argv and any(
+            x in sys.argv
+            for x in [
+                "makemigrations",
+                "migrate",
+                "collectstatic",
+                "test",
+            ]
+        ):
             return
 
         # Проверка, что это основной рабочий процесс, а не автоперезапуск Django (защита от двойного запуска)

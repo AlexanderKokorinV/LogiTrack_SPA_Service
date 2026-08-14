@@ -133,7 +133,24 @@ function App() {
           <div className="row g-3 align-items-center">
             <div className="col-md-3">
               <label className="form-label small text-info font-weight-bold mb-1">АНАЛИЗИРУЕМАЯ КОЛОНКА</label>
-              <select className="form-select text-white" style={styles.inputStyle} value={column} onChange={e => { setColumn(e.target.value); setPage(1); }}>
+              <select
+                className="form-select text-white"
+                style={styles.inputStyle}
+                value={column}
+                onChange={e => {
+                    const newColumn = e.target.value;
+
+                    setColumn(newColumn);
+
+                    if (newColumn === 'name') {
+                        setCondition('contains');
+                    } else {
+                        setCondition('equals');
+                  }
+
+                  setPage(1);
+                }}
+
                 <option value="name">Название (Маршрут)</option>
                 <option value="quantity">Количество груза</option>
                 <option value="distance">Расстояние</option>
@@ -155,7 +172,7 @@ function App() {
               {/* Добавлен внутренний стиль для placeholder, чтобы подсказка светилась белым */}
               <input
                   type="text"
-                  className="form-control text-white placeholder-light" // Добавили Bootstrap-класс
+                  className="form-control text-white placeholder-light"
                   style={styles.inputStyle}
                   placeholder="Начните вводить данные для мгновенной фильтрации..."
                   value={value}

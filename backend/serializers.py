@@ -10,4 +10,4 @@ class ShipmentLogSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ShipmentLog
-        fields = "__all__"
+        fields = ["id", "date", "name", "quantity", "distance"]
