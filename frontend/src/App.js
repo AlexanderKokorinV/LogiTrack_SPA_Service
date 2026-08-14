@@ -94,7 +94,7 @@ function App() {
   // === ФУНКЦИЯ ВЫГРУЗКИ В EXCEL/CSV ===
   const exportToCSV = async () => {
     try {
-      // Отправляем запрос на кастомный экшен бэкенда, передавая текущие фильтры
+      // Запрос к отдельному API-view для Excel-экспорта
       const response = await axios.get('/api/shipments/export_excel/', {
         params: { column, condition, value, ordering },
         responseType: 'blob' // говорим Axios, что скачиваем бинарный файл (.xlsx)
