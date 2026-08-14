@@ -150,6 +150,7 @@ function App() {
 
                   setPage(1);
                 }}
+               >
 
                 <option value="name">Название (Маршрут)</option>
                 <option value="quantity">Количество груза</option>
