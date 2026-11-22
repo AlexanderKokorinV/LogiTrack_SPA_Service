@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://sandercore.alwaysdata.net/api/$1"
+    }
+  ]
+}
