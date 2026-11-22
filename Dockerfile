@@ -1,7 +1,7 @@
-# 1. Используем базовый образ Python 3.14 (slim-версия)
+# 1. Базовый образ Python
 FROM python:3.14-slim
 
-# 2. Настройки системного окружения Python и Poetry
+# 2. Настройки окружения
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     POETRY_VIRTUALENVS_CREATE=false \
@@ -10,25 +10,27 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     POETRY_HOME="/opt/poetry" \
     PATH="/opt/poetry/bin:$PATH"
 
-# 3. Рабочая директория внутри контейнера
+# 3. Рабочая директория
 WORKDIR /app
 
 # 4. Установка системных утилит и Poetry
-RUN apt-get update && apt-get install --no-install-recommends -y curl libpq-dev \
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    curl \
     && curl -sSL https://install.python-poetry.org | python3 - \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# 5. Копирование конфигурационных файлов зависимостей
-COPY pyproject.toml poetry.lock* ./
+# 5. Копирование файлов зависимостей
+COPY pyproject.toml poetry.lock ./
 
-# 6. Установка только основных зависимостей проекта
-RUN poetry install --no-root --only main
+# 6. Установка основных зависимостей
+RUN poetry install --no-root --only main --no-ansi
 
-# 7. Копирование исходного кода приложения Django
+# 7. Копирование исходного кода
 COPY . .
 
-# 8. Открытие сетевого порта для веб-сервера внутри сети Docker
+# 8. Порт приложения
 EXPOSE 8000
 
-# 9. Запуск через Gunicorn
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]
+# 9. Миграции, сбор статики и запуск Gunicorn
+CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py collectstatic --noinput && exec gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3"]

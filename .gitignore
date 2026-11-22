@@ -197,3 +197,5 @@ media/
 
 frontend/      # nginx монтирует фронтенд отдельным томом
 backend_static/
+
+staticfiles/
