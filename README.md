@@ -14,6 +14,8 @@
 
 ## 🚀 Быстрый запуск проекта локально (одной командой)
 
+Проект доступен по ссылке: https://logi-track-spa-service.vercel.app/ 
+
 Для локального запуска всей инфраструктуры (PostgreSQL + Django + Nginx + React) в изолированных контейнерах вам понадобится установленный **Docker** и **Docker Compose**.
 
 ### Шаги запуска
@@ -159,13 +161,11 @@ LogiTrack_SPA_Service/
 
 ---
 
-### Ссылки на приложение, развернутое в Yandex Cloud:
+### Ссылка на приложение:
 Откройте ваш браузер и перейдите по адресу:  
-👉 Страница приложения: http://158.160.180.217/  
-👉 Админка: http://158.160.180.217/admin/  
-👉 Интерактивный UI (Swagger): http://158.160.180.217/swagger/  
-👉 Строгая спецификация (ReDoc): http://158.160.180.217/redoc/
-
+👉 Страница приложения: https://logi-track-spa-service.vercel.app/ 
+👉 Интерактивный UI (Swagger): https://sandercore.alwaysdata.net/swagger/
+👉 Строгая спецификация (ReDoc): https://sandercore.alwaysdata.net/redoc/
 ## 📜 Лицензия:
 
 Этот проект лицензирован по [лицензии MIT](LICENSE).
