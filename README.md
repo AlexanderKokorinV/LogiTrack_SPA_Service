@@ -161,11 +161,11 @@ LogiTrack_SPA_Service/
 
 ---
 
-### Ссылка на приложение:
+### Ссылка на приложение:  
 Откройте ваш браузер и перейдите по адресу:  
-👉 Страница приложения: https://logi-track-spa-service.vercel.app/ 
-👉 Интерактивный UI (Swagger): https://sandercore.alwaysdata.net/swagger/
-👉 Строгая спецификация (ReDoc): https://sandercore.alwaysdata.net/redoc/
+👉 Страница приложения: https://logi-track-spa-service.vercel.app/  
+👉 Интерактивный UI (Swagger): https://sandercore.alwaysdata.net/swagger/  
+👉 Строгая спецификация (ReDoc): https://sandercore.alwaysdata.net/redoc/  
 ## 📜 Лицензия:
 
 Этот проект лицензирован по [лицензии MIT](LICENSE).
